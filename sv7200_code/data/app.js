@@ -1,16 +1,10 @@
 // Configuration
 const config = {
-  pressure: {
-    min: 2,
-    max: 4,
-    warningThreshold: 3.5,
-    dangerThreshold: 4
-  },
   temperature: {
     min: 0,
     max: 100,
-    warningThreshold: 90,
-    dangerThreshold: 85
+    warningThreshold: 85,
+    dangerThreshold: 90
   },
   flow: {
     min: 0,
@@ -126,16 +120,10 @@ function updateCharts(data) {
 
 // DOM Elements
 const elements = {
-  pressure: document.getElementById('pressure'),
   temperature: document.getElementById('temperature'),
   flow: document.getElementById('flow'),
-  motor: document.getElementById('motor'),
-  mode: document.getElementById('mode'),
-  pressureBar: document.getElementById('pressureBar'),
   wifiStatus: document.getElementById('wifiStatus'),
-  ipAddress: document.getElementById('ipAddress'),
-  toggleBtn: document.getElementById('toggleBtn'),
-  overrideBtn: document.getElementById('overrideBtn')
+  ipAddress: document.getElementById('ipAddress')
 };
 
 let eventSource;
@@ -168,7 +156,7 @@ function connectSSE() {
     try {
       const data = JSON.parse(e.data);
       updateDashboard(data);
-      updateCharts(data); // Add this line to update charts
+      updateCharts(data);
     } catch (err) {
       console.error('Error parsing SSE data:', err);
     }
@@ -176,11 +164,6 @@ function connectSSE() {
 }
 
 function updateDashboard(data) {
-  if (data.pressure !== undefined) {
-    elements.pressure.textContent = data.pressure.toFixed(2);
-    updatePressureBar(data.pressure);
-  }
-  
   if (data.temperature !== undefined) {
     elements.temperature.textContent = data.temperature.toFixed(2);
     updateTemperatureColor(data.temperature);
@@ -188,31 +171,6 @@ function updateDashboard(data) {
   
   if (data.flow !== undefined) {
     elements.flow.textContent = data.flow.toFixed(2);
-  }
-  
-  if (data.motor !== undefined) {
-    elements.motor.textContent = data.motor ? "ON" : "OFF";
-    elements.motor.dataset.status = data.motor ? "ON" : "OFF";
-  }
-  
-  if (data.manualOverride !== undefined) {
-    elements.mode.textContent = data.manualOverride ? "MANUAL" : "AUTO";
-    elements.mode.dataset.status = data.manualOverride ? "MANUAL" : "AUTO";
-    elements.overrideBtn.style.backgroundColor = 
-      data.manualOverride ? 'var(--warning)' : 'var(--secondary)';
-  }
-}
-
-function updatePressureBar(pressure) {
-  const percentage = Math.min(100, (pressure / config.pressure.max) * 100);
-  elements.pressureBar.style.setProperty('--width', `${percentage}%`);
-  
-  if (pressure >= config.pressure.dangerThreshold) {
-    elements.pressureBar.style.setProperty('--color', 'var(--danger)');
-  } else if (pressure >= config.pressure.warningThreshold) {
-    elements.pressureBar.style.setProperty('--color', 'var(--warning)');
-  } else {
-    elements.pressureBar.style.setProperty('--color', 'var(--secondary)');
   }
 }
 
@@ -233,41 +191,6 @@ function updateConnectionStatus(connected) {
   wifiIcon.className = connected ? 'fas fa-wifi' : 'fas fa-wifi-slash';
   wifiIcon.style.color = connected ? '#4bb543' : '#ec0b43';
   elements.ipAddress.textContent = statusText;
-  
-  elements.toggleBtn.disabled = !connected;
-  elements.overrideBtn.disabled = !connected;
-}
-
-function sendCommand(command) {
-  const validCommands = ['toggle', 'override'];
-  if (!validCommands.includes(command)) {
-    console.error('Invalid command:', command);
-    return;
-  }
-  
-  if (!isConnected) {
-    console.error('Cannot send command: not connected to server');
-    return;
-  }
-  
-  fetch('/command', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ command })
-  })
-  .then(response => {
-    if (!response.ok) {
-      throw new Error(`Server returned ${response.status}: ${response.statusText}`);
-    }
-    return response.json();
-  })
-  .then(data => console.log('Command response:', data))
-  .catch(error => {
-    console.error('Error sending command:', error);
-    // You could add UI feedback here
-  });
 }
 
 function exportToCSV(data, labels, filename) {
@@ -313,24 +236,7 @@ function setupExportButtons() {
 
 // Initialize when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
-  initCharts(); // Initialize charts
+  initCharts();
   connectSSE();
   setupExportButtons();
-  
-  // Set initial styles
-  elements.pressureBar.style.setProperty('--width', '0%');
-  elements.pressureBar.style.setProperty('--color', 'var(--secondary)');
-  
-  // Event listeners
-  if (elements.toggleBtn) {
-    elements.toggleBtn.addEventListener('click', () => {
-      sendCommand('toggle');
-    });
-  }
-
-  if (elements.overrideBtn) {
-    elements.overrideBtn.addEventListener('click', () => {
-      sendCommand('override');
-    });
-  }
 });

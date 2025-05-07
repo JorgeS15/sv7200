@@ -1,0 +1,57 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <title>Interface SV7200</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" type="text/css" href="style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <!-- Add Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <div class="topnav">
+    <h1><i class="fas fa-microchip"></i> Interface SV7200 </h1>
+    <div class="wifi-status" id="wifiStatus">
+      <i class="fas fa-wifi"></i> <span id="ipAddress">A conectar...</span>
+    </div>
+  </div>
+  
+  <div class="content">
+    <div class="card-grid">
+      <div class="card">
+        <h2><i class="fas fa-thermometer-half"></i> Temperatura</h2>
+        <div class="value-container">
+          <span id="temperature">0.00</span>
+          <span class="unit">&deg;C</span>
+        </div>
+      </div>
+      
+      <div class="card">
+        <h2><i class="fas fa-tint"></i> Caudal</h2>
+        <div class="value-container">
+          <span id="flow">0.00</span>
+          <span class="unit">L/min</span>
+        </div>
+      </div>
+    </div>
+	
+	<div class="card">
+	  <h2><i class="fas fa-chart-line"></i> Temperatura</h2>
+	  <button id="exportTempBtn" class="export-btn">
+		<i class="fas fa-file-excel"></i> Exportar Dados Temperatura
+	  </button>
+	  <canvas id="tempChart"></canvas>
+	</div>
+
+	<div class="card">
+	  <h2><i class="fas fa-chart-line"></i> Caudal</h2>
+	  <button id="exportFlowBtn" class="export-btn">
+		<i class="fas fa-file-excel"></i> Exportar Dados Caudal
+	  </button>
+	  <canvas id="flowChart"></canvas>
+	</div>
+
+  <script src="app.js"></script>
+</body>
+</html>

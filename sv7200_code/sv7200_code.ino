@@ -8,8 +8,8 @@
 bool debug = true;
 
 // Wi-Fi credentials
-const char* SSID = "ssid";
-const char* PASSWORD = "password";
+const char* SSID = "SSID";
+const char* PASSWORD = "PASSWORD";
 
 // Track Wi-Fi status
 bool wifiConnected = false;
@@ -52,7 +52,6 @@ void setup() {
   pinMode(19, INPUT_PULLDOWN);
   attachInterrupt(digitalPinToInterrupt(18), pulseCounter, RISING);
   attachInterrupt(digitalPinToInterrupt(19), pulseCounter2, RISING);
-
 }
 
 void loop() {
@@ -74,14 +73,6 @@ void loop() {
         }
 
         notifyClients();
-        /*
-        Serial.print("F1: ");
-        Serial.print(f1);
-        Serial.println(" Hz");
-        Serial.print("F2: ");
-        Serial.print(f2);
-        Serial.println(" Hz");
-        */
         Serial.println("Temperatura: ");
         Serial.print(temperature);
         Serial.println(" ºC");
@@ -89,7 +80,6 @@ void loop() {
         Serial.print(flow);
         Serial.println(" L/min");
     }
-
 }
 
 void setupWiFi() {
@@ -145,21 +135,6 @@ void webRoutes(){
 
     server.on("/app.js", HTTP_GET, [](AsyncWebServerRequest *request){
         request->send(LittleFS, "/app.js", "application/javascript");
-    });
-
-    server.on("/command", HTTP_POST, [](AsyncWebServerRequest *request) {
-    }, NULL, [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total) {
-        DynamicJsonDocument doc(128);
-        DeserializationError error = deserializeJson(doc, data, len);
-        
-        if (!error) {
-            if (doc.containsKey("command")) {                
-                notifyClients();
-                request->send(200, "application/json", "{\"status\":\"ok\"}");
-                return;
-            }
-        }
-        request->send(400, "application/json", "{\"error\":\"invalid request\"}");
     });
 
     events.onConnect([](AsyncEventSourceClient *client) {
