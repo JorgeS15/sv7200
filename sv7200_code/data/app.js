@@ -169,11 +169,45 @@ function updateDashboard(data) {
   if (data.temperature !== undefined) {
     elements.temperature.textContent = data.temperature.toFixed(2);
     updateTemperatureColor(data.temperature);
+    updateTemperatureStats(data.temperature);
   }
   
   if (data.flow !== undefined) {
     elements.flow.textContent = data.flow.toFixed(2);
+    updateFlowStats(data.flow);
   }
+}
+
+function updateTemperatureStats(currentTemp) {
+  // Calculate mean
+  chartConfig.tempData.push(currentTemp);
+  const sum = chartConfig.tempData.reduce((a, b) => a + b, 0);
+  const mean = sum / chartConfig.tempData.length;
+  document.getElementById('tempMean').textContent = mean.toFixed(2);
+  
+  // Calculate difference (current - mean)
+  const diff = currentTemp - mean;
+  const diffElement = document.getElementById('tempDiff');
+  diffElement.textContent = Math.abs(diff).toFixed(2);
+  
+  // Color code the difference
+  diffElement.style.color = diff >= 0 ? 'var(--danger)' : 'var(--success)';
+}
+
+function updateFlowStats(currentFlow) {
+  // Calculate mean
+  chartConfig.flowData.push(currentFlow);
+  const sum = chartConfig.flowData.reduce((a, b) => a + b, 0);
+  const mean = sum / chartConfig.flowData.length;
+  document.getElementById('flowMean').textContent = mean.toFixed(2);
+  
+  // Calculate difference (current - mean)
+  const diff = currentFlow - mean;
+  const diffElement = document.getElementById('flowDiff');
+  diffElement.textContent = Math.abs(diff).toFixed(2);
+  
+  // Color code the difference
+  diffElement.style.color = diff >= 0 ? 'var(--danger)' : 'var(--success)';
 }
 
 function updateTemperatureColor(temp) {
@@ -199,18 +233,36 @@ function exportToCSV() {
   let csvContent = "data:text/csv;charset=utf-8,";
   
   // Add headers
-  csvContent += "Time,Temperature (°C),Flow (L/min)\n";
+  csvContent += "Time,Temperature (°C),Temp Mean,Temp Difference,Flow (L/min),Flow Mean,Flow Difference\n";
+  
+  // Calculate means for each data point
+  const tempMeans = [];
+  const tempDiffs = [];
+  const flowMeans = [];
+  const flowDiffs = [];
+  
+  for (let i = 0; i < chartConfig.tempData.length; i++) {
+    const tempMean = chartConfig.tempData.slice(0, i+1).reduce((a, b) => a + b, 0) / (i+1);
+    const tempDiff = chartConfig.tempData[i] - tempMean;
+    tempMeans.push(tempMean);
+    tempDiffs.push(tempDiff);
+    
+    const flowMean = chartConfig.flowData.slice(0, i+1).reduce((a, b) => a + b, 0) / (i+1);
+    const flowDiff = chartConfig.flowData[i] - flowMean;
+    flowMeans.push(flowMean);
+    flowDiffs.push(flowDiff);
+  }
   
   // Add data rows
   for (let i = 0; i < chartConfig.tempData.length; i++) {
-    csvContent += `${chartConfig.labels[i]},${chartConfig.tempData[i]},${chartConfig.flowData[i]}\n`;
+    csvContent += `${chartConfig.labels[i]},${chartConfig.tempData[i]},${tempMeans[i].toFixed(2)},${tempDiffs[i].toFixed(2)},${chartConfig.flowData[i]},${flowMeans[i].toFixed(2)},${flowDiffs[i].toFixed(2)}\n`;
   }
   
   // Create download link
   const encodedUri = encodeURI(csvContent);
   const link = document.createElement("a");
   link.setAttribute("href", encodedUri);
-  link.setAttribute("download", `sensor_data_${new Date().toISOString().slice(0,10)}.csv`);
+  link.setAttribute("download", `sensor_stats_${new Date().toISOString().slice(0,10)}.csv`);
   document.body.appendChild(link);
   
   // Trigger download

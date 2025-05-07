@@ -135,6 +135,24 @@ canvas {
   font-size: 1rem;
 }
 
+.stats-container {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 10px;
+  font-size: 0.9rem;
+  color: #555;
+}
+
+.stats-container div {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.stats-container span {
+  font-weight: bold;
+}
+
 @media (max-width: 768px) {
   .card-grid {
     grid-template-columns: 1fr;
