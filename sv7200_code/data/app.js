@@ -14,85 +14,91 @@ const config = {
 
 // Chart configuration
 const chartConfig = {
-  maxDataPoints: 600, // Show last 600 data points (1h if updates every second)
-  tempChart: null,
-  flowChart: null,
+  maxDataPoints: 600,
+  combinedChart: null,
   tempData: [],
   flowData: [],
   labels: []
 };
 
-// Initialize charts
-function initCharts() {
-  // Temperature chart
-  const tempCtx = document.getElementById('tempChart').getContext('2d');
-  chartConfig.tempChart = new Chart(tempCtx, {
+// Initialize chart
+function initChart() {
+  const ctx = document.getElementById('combinedChart').getContext('2d');
+  chartConfig.combinedChart = new Chart(ctx, {
     type: 'line',
     data: {
       labels: chartConfig.labels,
-      datasets: [{
-        label: 'Temperatura (°C)',
-        data: chartConfig.tempData,
-        borderColor: 'rgb(255, 99, 132)',
-        backgroundColor: 'rgba(255, 99, 132, 0.1)',
-        tension: 0.1,
-        fill: true
-      }]
+      datasets: [
+        {
+          label: 'Temperatura (°C)',
+          data: chartConfig.tempData,
+          borderColor: 'rgb(255, 99, 132)',
+          backgroundColor: 'rgba(255, 99, 132, 0.1)',
+          tension: 0.1,
+          fill: true,
+          yAxisID: 'y'
+        },
+        {
+          label: 'Caudal (L/min)',
+          data: chartConfig.flowData,
+          borderColor: 'rgb(54, 162, 235)',
+          backgroundColor: 'rgba(54, 162, 235, 0.1)',
+          tension: 0.1,
+          fill: true,
+          yAxisID: 'y1'
+        }
+      ]
     },
     options: {
       responsive: true,
       maintainAspectRatio: false,
+      interaction: {
+        mode: 'index',
+        intersect: false,
+      },
       scales: {
         y: {
+          type: 'linear',
+          display: true,
+          position: 'left',
+          title: {
+            display: true,
+            text: 'Temperatura (°C)'
+          },
           min: config.temperature.min,
           max: config.temperature.max,
           ticks: {
             stepSize: 5
           }
-        }
-      },
-      animation: {
-        duration: 0 // disable animations for better performance
-      }
-    }
-  });
-
-  // Flow chart
-  const flowCtx = document.getElementById('flowChart').getContext('2d');
-  chartConfig.flowChart = new Chart(flowCtx, {
-    type: 'line',
-    data: {
-      labels: chartConfig.labels,
-      datasets: [{
-        label: 'Caudal (L/min)',
-        data: chartConfig.flowData,
-        borderColor: 'rgb(54, 162, 235)',
-        backgroundColor: 'rgba(54, 162, 235, 0.1)',
-        tension: 0.1,
-        fill: true
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      scales: {
-        y: {
+        },
+        y1: {
+          type: 'linear',
+          display: true,
+          position: 'right',
+          title: {
+            display: true,
+            text: 'Caudal (L/min)'
+          },
           min: config.flow.min,
           max: config.flow.max,
           ticks: {
             stepSize: 5
+          },
+          // This ensures the grid lines don't appear for the right axis
+          grid: {
+            drawOnChartArea: false,
           }
         }
       },
       animation: {
-        duration: 0 // disable animations for better performance
+        duration: 0
       }
     }
   });
 }
 
-// Update charts with new data
-function updateCharts(data) {
+// Update chart with new data
+function updateChart(data) {
   const now = new Date();
   const timeLabel = now.getHours() + ':' + now.getMinutes() + ':' + now.getSeconds();
   
@@ -108,14 +114,11 @@ function updateCharts(data) {
     chartConfig.labels.shift();
   }
   
-  // Update charts
-  chartConfig.tempChart.data.labels = chartConfig.labels;
-  chartConfig.tempChart.data.datasets[0].data = chartConfig.tempData;
-  chartConfig.tempChart.update();
-  
-  chartConfig.flowChart.data.labels = chartConfig.labels;
-  chartConfig.flowChart.data.datasets[0].data = chartConfig.flowData;
-  chartConfig.flowChart.update();
+  // Update chart
+  chartConfig.combinedChart.data.labels = chartConfig.labels;
+  chartConfig.combinedChart.data.datasets[0].data = chartConfig.tempData;
+  chartConfig.combinedChart.data.datasets[1].data = chartConfig.flowData;
+  chartConfig.combinedChart.update();
 }
 
 // DOM Elements
@@ -147,7 +150,6 @@ function connectSSE() {
     isConnected = false;
     updateConnectionStatus(false);
     
-    // Close the connection before attempting to reconnect
     eventSource.close();
     setTimeout(connectSSE, 3000);
   };
@@ -156,7 +158,7 @@ function connectSSE() {
     try {
       const data = JSON.parse(e.data);
       updateDashboard(data);
-      updateCharts(data);
+      updateChart(data);
     } catch (err) {
       console.error('Error parsing SSE data:', err);
     }
@@ -193,22 +195,22 @@ function updateConnectionStatus(connected) {
   elements.ipAddress.textContent = statusText;
 }
 
-function exportToCSV(data, labels, filename) {
+function exportToCSV() {
   let csvContent = "data:text/csv;charset=utf-8,";
   
   // Add headers
-  csvContent += "Time,Value\n";
+  csvContent += "Time,Temperature (°C),Flow (L/min)\n";
   
   // Add data rows
-  for (let i = 0; i < data.length; i++) {
-    csvContent += `${labels[i]},${data[i]}\n`;
+  for (let i = 0; i < chartConfig.tempData.length; i++) {
+    csvContent += `${chartConfig.labels[i]},${chartConfig.tempData[i]},${chartConfig.flowData[i]}\n`;
   }
   
   // Create download link
   const encodedUri = encodeURI(csvContent);
   const link = document.createElement("a");
   link.setAttribute("href", encodedUri);
-  link.setAttribute("download", filename);
+  link.setAttribute("download", `sensor_data_${new Date().toISOString().slice(0,10)}.csv`);
   document.body.appendChild(link);
   
   // Trigger download
@@ -216,27 +218,13 @@ function exportToCSV(data, labels, filename) {
   document.body.removeChild(link);
 }
 
-function setupExportButtons() {
-  document.getElementById('exportTempBtn').addEventListener('click', () => {
-    exportToCSV(
-      chartConfig.tempData,
-      chartConfig.labels,
-      `temperature_data_${new Date().toISOString().slice(0,10)}.csv`
-    );
-  });
-  
-  document.getElementById('exportFlowBtn').addEventListener('click', () => {
-    exportToCSV(
-      chartConfig.flowData,
-      chartConfig.labels,
-      `flow_data_${new Date().toISOString().slice(0,10)}.csv`
-    );
-  });
+function setupExportButton() {
+  document.getElementById('exportDataBtn').addEventListener('click', exportToCSV);
 }
 
 // Initialize when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
-  initCharts();
+  initChart();
   connectSSE();
-  setupExportButtons();
+  setupExportButton();
 });
