@@ -153,6 +153,37 @@ canvas {
   font-weight: bold;
 }
 
+.header-controls {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.language-switcher {
+  display: flex;
+  border-radius: 4px;
+  overflow: hidden;
+  border: 1px solid var(--secondary);
+}
+
+.lang-btn {
+  padding: 5px 10px;
+  border: none;
+  background: white;
+  cursor: pointer;
+  font-weight: bold;
+  color: var(--dark);
+}
+
+.lang-btn.active {
+  background: var(--secondary);
+  color: white;
+}
+
+[data-i18n] {
+  transition: opacity 0.3s ease;
+}
+
 @media (max-width: 768px) {
   .card-grid {
     grid-template-columns: 1fr;

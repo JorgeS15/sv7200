@@ -1,7 +1,8 @@
 <!DOCTYPE HTML>
 <html>
 <head>
-  <title>Interface SV7200</title>
+  <meta charset="UTF-8">
+  <title data-i18n="title">Interface SV7200</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="icon" href="data:,">
   <link rel="stylesheet" type="text/css" href="style.css">
@@ -10,43 +11,49 @@
 </head>
 <body>
   <div class="topnav">
-    <h1><i class="fas fa-microchip"></i> Interface SV7200 </h1>
-    <div class="wifi-status" id="wifiStatus">
-      <i class="fas fa-wifi"></i> <span id="ipAddress">A conectar...</span>
+    <h1><i class="fas fa-microchip"></i> <span data-i18n="title">Interface SV7200</span></h1>
+    <div class="header-controls">
+      <div class="wifi-status" id="wifiStatus">
+        <i class="fas fa-wifi"></i> <span id="ipAddress" data-i18n="connecting">Connecting...</span>
+      </div>
+      <div class="language-switcher">
+        <button id="lang-en" class="lang-btn active">EN</button>
+        <button id="lang-pt" class="lang-btn">PT</button>
+      </div>
     </div>
   </div>
   
   <div class="content">
     <div class="card-grid">
       <div class="card">
-        <h2><i class="fas fa-thermometer-half"></i> Temperatura</h2>
+        <h2><i class="fas fa-thermometer-half"></i> <span data-i18n="temperature">Temperature</span></h2>
         <div class="value-container">
           <span id="temperature">0.00</span>
-          <span class="unit">&deg;C</span>
+          <span class="unit">°C</span>
         </div>
         <div class="stats-container">
-          <div>Media: <span id="tempMean">0.00</span>&deg;C</div>
-          <div>Δ: <span id="tempDiff">0.00</span>&deg;C</div>
+          <div><span data-i18n="mean">Mean</span>: <span id="tempMean">0.00</span>°C</div>
+          <div>Δ: <span id="tempDiff">0.00</span>°C</div>
         </div>
       </div>
       
       <div class="card">
-        <h2><i class="fas fa-tint"></i> Caudal</h2>
+        <h2><i class="fas fa-tint"></i> <span data-i18n="flow">Flow</span></h2>
         <div class="value-container">
           <span id="flow">0.00</span>
-          <span class="unit">L/min</span>
+          <span class="unit" data-i18n="flow_unit">L/min</span>
         </div>
         <div class="stats-container">
-          <div>Media: <span id="flowMean">0.00</span> L/min</div>
-          <div>Δ: <span id="flowDiff">0.00</span> L/min</div>
+          <div><span data-i18n="mean">Mean</span>: <span id="flowMean">0.00</span> <span data-i18n="flow_unit">L/min</span></div>
+          <div>Δ: <span id="flowDiff">0.00</span> <span data-i18n="flow_unit">L/min</span></div>
         </div>
       </div>
     </div>
     
     <div class="card">
-      <h2><i class="fas fa-chart-line"></i> Temperature & Flow</h2>
+      <h2><i class="fas fa-chart-line"></i> <span data-i18n="chart_title">Temperature & Flow</span></h2>
       <button id="exportDataBtn" class="export-btn">
-        <i class="fas fa-file-excel"></i> Export All Data
+        <i class="fas fa-file-excel"></i> <span data-i18n="export_data">Export Data</span>
       </button>
       <canvas id="combinedChart"></canvas>
     </div>

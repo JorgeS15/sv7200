@@ -21,6 +21,71 @@ const chartConfig = {
   labels: []
 };
 
+// Language configuration
+const i18n = {
+  en: {
+    title: "SV7200 Interface",
+    connecting: "Connecting...",
+    temperature: "Temperature",
+    flow: "Flow",
+    flow_unit: "L/min",
+    mean: "Mean",
+    chart_title: "Temperature & Flow",
+    export_data: "Export Data",
+    connected: "Connected",
+    disconnected: "Disconnected"
+  },
+  pt: {
+    title: "Interface SV7200",
+    connecting: "A conectar...",
+    temperature: "Temperatura",
+    flow: "Caudal",
+    flow_unit: "L/min",
+    mean: "Média",
+    chart_title: "Temperatura e Caudal",
+    export_data: "Exportar Dados",
+    connected: "Conectado",
+    disconnected: "Desconectado"
+  }
+};
+
+let currentLanguage = 'en';
+
+function updateContentLanguage() {
+  document.querySelectorAll('[data-i18n]').forEach(element => {
+    const key = element.getAttribute('data-i18n');
+    if (i18n[currentLanguage][key]) {
+      element.textContent = i18n[currentLanguage][key];
+    }
+  });
+
+  // Update chart axes labels if chart exists
+  if (chartConfig.combinedChart) {
+    chartConfig.combinedChart.options.scales.y.title.text = currentLanguage === 'en' ? 'Temperature (°C)' : 'Temperatura (°C)';
+    chartConfig.combinedChart.options.scales.y1.title.text = currentLanguage === 'en' ? 'Flow (L/min)' : 'Caudal (L/min)';
+    chartConfig.combinedChart.update();
+  }
+}
+
+function setupLanguageSwitcher() {
+	currentLanguage = localStorage.getItem('language') || 'en';
+  document.getElementById('lang-en').addEventListener('click', () => {
+    currentLanguage = 'en';
+    document.getElementById('lang-en').classList.add('active');
+    document.getElementById('lang-pt').classList.remove('active');
+	localStorage.setItem('language', currentLanguage);
+    updateContentLanguage();
+  });
+
+  document.getElementById('lang-pt').addEventListener('click', () => {
+    currentLanguage = 'pt';
+    document.getElementById('lang-pt').classList.add('active');
+    document.getElementById('lang-en').classList.remove('active');
+	localStorage.setItem('language', currentLanguage);
+    updateContentLanguage();
+  });
+}
+
 // Initialize chart
 function initChart() {
   const ctx = document.getElementById('combinedChart').getContext('2d');
@@ -30,7 +95,7 @@ function initChart() {
       labels: chartConfig.labels,
       datasets: [
         {
-          label: 'Temperatura (°C)',
+          label: currentLanguage === 'en' ? 'Temperature (°C)' : 'Temperatura (°C)',
           data: chartConfig.tempData,
           borderColor: 'rgb(255, 99, 132)',
           backgroundColor: 'rgba(255, 99, 132, 0.1)',
@@ -39,7 +104,7 @@ function initChart() {
           yAxisID: 'y'
         },
         {
-          label: 'Caudal (L/min)',
+          label: currentLanguage === 'en' ? 'Flow (L/min)' : 'Caudal (L/min)',
           data: chartConfig.flowData,
           borderColor: 'rgb(54, 162, 235)',
           backgroundColor: 'rgba(54, 162, 235, 0.1)',
@@ -222,11 +287,12 @@ function updateTemperatureColor(temp) {
 
 function updateConnectionStatus(connected) {
   const wifiIcon = elements.wifiStatus.querySelector('i');
-  const statusText = connected ? window.location.hostname : 'Disconnected';
+  const statusText = connected ? window.location.hostname : i18n[currentLanguage]['disconnected'];
   
   wifiIcon.className = connected ? 'fas fa-wifi' : 'fas fa-wifi-slash';
   wifiIcon.style.color = connected ? '#4bb543' : '#ec0b43';
   elements.ipAddress.textContent = statusText;
+  elements.ipAddress.setAttribute('data-i18n', connected ? 'connected' : 'disconnected');
 }
 
 function exportToCSV() {
@@ -279,4 +345,6 @@ document.addEventListener('DOMContentLoaded', () => {
   initChart();
   connectSSE();
   setupExportButton();
+  setupLanguageSwitcher(); // Add this line
+  updateContentLanguage();
 });
