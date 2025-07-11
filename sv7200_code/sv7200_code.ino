@@ -1,15 +1,21 @@
+//version 1.0.2
+//mDNS added
+
 #include <WiFi.h>
 #include "LittleFS.h"
 #include <AsyncTCP.h>
 #include <ESPAsyncWebServer.h>
 #include <ElegantOTA.h>
 #include <ArduinoJson.h>
+#include <ESPmDNS.h>
 
-bool debug = true;
+bool debug = false;
 
 // Wi-Fi credentials
 const char* SSID = "SSID";
 const char* PASSWORD = "PASSWORD";
+const char* hostname = "sv7200";
+
 
 // Track Wi-Fi status
 bool wifiConnected = false;
@@ -48,6 +54,14 @@ void setup() {
   ElegantOTA.begin(&server);
   server.begin();
   Serial.println("Web server started");
+  if (!MDNS.begin(hostname)) {
+    Serial.println("mDNS responder started");
+    Serial.print("Access your ESP32 at: http://");
+    Serial.print(hostname);
+    Serial.println(".local");
+  } else {
+    Serial.println("Error starting mDNS");
+  }
   pinMode(18, INPUT_PULLDOWN);
   pinMode(19, INPUT_PULLDOWN);
   attachInterrupt(digitalPinToInterrupt(18), pulseCounter, RISING);
@@ -64,12 +78,12 @@ void loop() {
         pulseCount2 = 0;
         interrupts();
         lastTime = millis();
-        temperature = (float) f1/10.0 - 10;
-        flow = (float) f2/10.0;
+        flow = (float) f1/10.0;
+        temperature = (float) f2/10.0 - 10;
 
         if (debug){
-            temperature = random(0, 90);
-            flow = random(0, 100);
+            temperature = random(80, 90);
+            flow = random(60, 70);
         }
 
         notifyClients();
