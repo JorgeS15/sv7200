@@ -9,12 +9,15 @@ const config = {
   flow: {
     min: 0,
     max: 100
+  },
+  theme: {
+    dark: false
   }
 };
 
 // Chart configuration
 const chartConfig = {
-  maxDataPoints: 600,
+  maxDataPoints: 3600,
   combinedChart: null,
   tempData: [],
   flowData: [],
@@ -30,10 +33,12 @@ const i18n = {
     flow: "Flow",
     flow_unit: "L/min",
     mean: "Mean",
+	difference: "Difference",
     chart_title: "Temperature & Flow",
     export_data: "Export Data",
     connected: "Connected",
-    disconnected: "Disconnected"
+    disconnected: "Disconnected",
+    firmware: "Firmware version"
   },
   pt: {
     title: "Interface SV7200",
@@ -42,10 +47,12 @@ const i18n = {
     flow: "Caudal",
     flow_unit: "L/min",
     mean: "Média",
+	difference: "Diferença",
     chart_title: "Temperatura e Caudal",
     export_data: "Exportar Dados",
     connected: "Conectado",
-    disconnected: "Desconectado"
+    disconnected: "Desconectado",
+    firmware: "Versão do firmware"
   }
 };
 
@@ -86,9 +93,44 @@ function setupLanguageSwitcher() {
   });
 }
 
+function toggleDarkMode() {
+  config.theme.dark = !config.theme.dark;
+  document.documentElement.setAttribute('data-theme', config.theme.dark ? 'dark' : 'light');
+  
+  // Update toggle button icon
+  const icon = document.getElementById('themeToggle').querySelector('i');
+  icon.className = config.theme.dark ? 'fas fa-sun' : 'fas fa-moon';
+  
+  // Save preference to localStorage
+  localStorage.setItem('darkMode', config.theme.dark);
+  
+  // Update chart colors if chart exists
+  updateChartTheme();
+}
+
+function updateChartTheme() {
+  if (chartConfig.combinedChart) {
+    const isDark = config.theme.dark;
+    const gridColor = isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
+    const textColor = isDark ? '#e0e0e0' : '#666';
+    
+    chartConfig.combinedChart.options.scales.x.grid.color = gridColor;
+    chartConfig.combinedChart.options.scales.y.grid.color = gridColor;
+    chartConfig.combinedChart.options.scales.y1.grid.color = gridColor;
+    chartConfig.combinedChart.options.scales.x.ticks.color = textColor;
+    chartConfig.combinedChart.options.scales.y.ticks.color = textColor;
+    chartConfig.combinedChart.options.scales.y1.ticks.color = textColor;
+    chartConfig.combinedChart.update();
+  }
+}
+
 // Initialize chart
 function initChart() {
   const ctx = document.getElementById('combinedChart').getContext('2d');
+  const isDark = config.theme.dark;
+  const gridColor = isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
+  const textColor = isDark ? '#e0e0e0' : '#666';
+  
   chartConfig.combinedChart = new Chart(ctx, {
     type: 'line',
     data: {
@@ -122,7 +164,21 @@ function initChart() {
         intersect: false,
       },
       scales: {
+		x: {
+          grid: {
+            color: gridColor
+          },
+          ticks: {
+            color: textColor
+          }
+        },
         y: {
+			grid: {
+              color: gridColor
+            },
+            ticks: {
+              color: textColor
+            },
           type: 'linear',
           display: true,
           position: 'left',
@@ -137,6 +193,12 @@ function initChart() {
           }
         },
         y1: {
+			grid: {
+              color: gridColor
+            },
+            ticks: {
+              color: textColor
+			},
           type: 'linear',
           display: true,
           position: 'right',
@@ -186,6 +248,22 @@ function updateChart(data) {
   chartConfig.combinedChart.update();
 }
 
+// Fetch and display firmware version
+async function updateFirmwareVersion() {
+  try {
+    const response = await fetch('/firmware');
+    const data = await response.json();
+    const firmwareElement = document.getElementById('firmwareVersion');
+    firmwareElement.textContent = data.version;
+    
+    // Optional: Add tooltip with compile date/time
+    firmwareElement.title = `Compiled: ${data.compile_date} ${data.compile_time}`;
+  } catch (error) {
+    console.warn('Could not fetch firmware version:', error);
+    document.getElementById('firmwareVersion').textContent = 'Unknown';
+  }
+}
+
 // DOM Elements
 const elements = {
   temperature: document.getElementById('temperature'),
@@ -224,6 +302,11 @@ function connectSSE() {
       const data = JSON.parse(e.data);
       updateDashboard(data);
       updateChart(data);
+      
+      // Update firmware version if included in the data
+      if (data.firmware_version) {
+        document.getElementById('firmwareVersion').textContent = data.firmware_version;
+      }
     } catch (err) {
       console.error('Error parsing SSE data:', err);
     }
@@ -345,6 +428,14 @@ document.addEventListener('DOMContentLoaded', () => {
   initChart();
   connectSSE();
   setupExportButton();
-  setupLanguageSwitcher(); // Add this line
+  setupLanguageSwitcher();
   updateContentLanguage();
+  updateFirmwareVersion(); // Fetch firmware version on page load
+  
+  const savedTheme = localStorage.getItem('darkMode') === 'true';
+  if (savedTheme) {
+    toggleDarkMode(); // This will apply dark mode if saved
+  }
+   // Setup theme toggle
+  document.getElementById('themeToggle').addEventListener('click', toggleDarkMode);
 });
